@@ -22,6 +22,21 @@ type closeStruct struct {
 	c io.Closer
 }
 
+var iodrivers = map[string]func(*url.URL) (io.ReadWriteCloser, error){
+	"udp": NewUDPReadWriter,
+	"tcp": NewTCPReadWriter,
+}
+
+func RegisterIO(name string, driver func(*url.URL) (io.ReadWriteCloser, error)) {
+	if driver == nil {
+		panic("dendrite RegisterIO driver is nil.")
+	}
+	if _, dup := iodrivers[name]; dup {
+		panic("dendrite RegisterIO called twice for driver " + name)
+	}
+	iodrivers[name] = driver
+}
+
 var EmptyReader = new(noOpReader)
 
 func (er *noOpReader) Read(p []byte) (n int, err error) {
@@ -38,12 +53,12 @@ func NewReadWriter(u *url.URL) (io.ReadWriteCloser, error) {
 		return NewUDPReadWriter(u)
 	case "tcp":
 		return NewTCPReadWriter(u)
-	case "tcps", "tcp+tls":
-		panic("not implemented")
-	case "http", "https":
-		panic("not implemented")
 	default:
-		panic("unknown protocol")
+		if driver, ok := iodrivers[protocol]; !ok {
+			panic("protocol not implemented: " + protocol)
+		} else {
+			return driver(u)
+		}
 	}
 	return nil, nil //unreached
 }
