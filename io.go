@@ -22,10 +22,7 @@ type closeStruct struct {
 	c io.Closer
 }
 
-var iodrivers = map[string]func(*url.URL) (io.ReadWriteCloser, error){
-	"udp": NewUDPReadWriter,
-	"tcp": NewTCPReadWriter,
-}
+var iodrivers = make(map[string]func(*url.URL) (io.ReadWriteCloser, error))
 
 func RegisterIO(name string, driver func(*url.URL) (io.ReadWriteCloser, error)) {
 	if driver == nil {
@@ -35,6 +32,11 @@ func RegisterIO(name string, driver func(*url.URL) (io.ReadWriteCloser, error)) 
 		panic("dendrite RegisterIO called twice for driver " + name)
 	}
 	iodrivers[name] = driver
+}
+
+func init() {
+	RegisterIO("udp", NewUDPReadWriter)
+	RegisterIO("tcp", NewTCPReadWriter)
 }
 
 var EmptyReader = new(noOpReader)

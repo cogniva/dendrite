@@ -16,10 +16,7 @@ type JsonEncoder struct{}
 type StatsdEncoder struct{}
 type RawStringEncoder struct{}
 
-var encoders = map[string]Encoder{
-	"json":   new(JsonEncoder),
-	"statsd": new(StatsdEncoder),
-}
+var encoders = make(map[string]Encoder)
 
 func RegisterEncoder(name string, encoder Encoder) {
 	if encoder == nil {
@@ -29,6 +26,11 @@ func RegisterEncoder(name string, encoder Encoder) {
 		panic("dendrite RegisterEncoder called twice for encoder " + name)
 	}
 	encoders[name] = encoder
+}
+
+func init() {
+	RegisterEncoder("json", new(JsonEncoder))
+	RegisterEncoder("statsd", new(StatsdEncoder))
 }
 
 func NewEncoder(u *url.URL) (Encoder, error) {
