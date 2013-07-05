@@ -16,13 +16,27 @@ type JsonEncoder struct{}
 type StatsdEncoder struct{}
 type RawStringEncoder struct{}
 
+var encoders = map[string]Encoder{
+	"json":   new(JsonEncoder),
+	"statsd": new(StatsdEncoder),
+}
+
+func RegisterEncoder(name string, encoder Encoder) {
+	if encoder == nil {
+		panic("dendrite RegisterEncoder encoder is nil.")
+	}
+	if _, dup := encoders[name]; dup {
+		panic("dendrite RegisterEncoder called twice for encoder " + name)
+	}
+	encoders[name] = encoder
+}
+
 func NewEncoder(u *url.URL) (Encoder, error) {
 	a := strings.Split(u.Scheme, "+")
-	switch a[len(a)-1] {
-	case "json":
-		return new(JsonEncoder), nil
-	case "statsd":
-		return new(StatsdEncoder), nil
+	if len(a) > 1 {
+		if encoder, ok := encoders[a[len(a)-1]]; ok {
+			return encoder, nil
+		}
 	}
 	return new(RawStringEncoder), nil
 }
