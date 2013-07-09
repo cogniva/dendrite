@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-var configFile = flag.String("f", "/etc/dendrite/config.yaml", "location of the config file")
+var configFile = flag.String("f", "dendrite.yaml", "location of the config file")
 var debug = flag.Bool("d", false, "log at DEBUG")
-var logFile = flag.String("l", "/var/log/dendrite.log", "location of the log file")
+var logFile = flag.String("l", "dendrite.log", "location of the log file")
 var cpus = flag.Int("c", runtime.NumCPU(), "number of cpus to possibly use")
 var name = flag.String("n", "unknown", "override the system value of hostname")
 var quitAfter = flag.Float64("q", -1, "quit after this many seconds (useful for tests)")
