@@ -8,7 +8,6 @@ import (
 	"io"
 	"launchpad.net/tomb"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -91,21 +90,14 @@ func (tail *Tail) SetOffset(o int64) {
 }
 
 func (tail *Tail) WriteOffset() {
-	path := filepath.Join(os.TempDir(), filepath.Base(tail.OffsetPath))
-	temp, err := os.Create(path)
+	temp, err := os.Create(tail.OffsetPath)
 	if err != nil {
-		logs.Debug("Can't create tempfile:", err)
+		logs.Debug("Can't create offset file:", err)
 	} else {
 		_, err := fmt.Fprintf(temp, "%d\n", tail.Offset())
 		if err != nil {
-			logs.Debug("Can't write to tempfile:", err)
+			logs.Debug("Can't write to offset file:", err)
 			temp.Close()
-		} else {
-			temp.Close()
-			err := os.Rename(path, tail.OffsetPath)
-			if err != nil {
-				logs.Debug("Rename failed:", err)
-			}
 		}
 	}
 }
