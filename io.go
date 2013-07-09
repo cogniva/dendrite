@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -32,7 +33,7 @@ func NewReadWriter(u *url.URL) (io.ReadWriteCloser, error) {
 	protocol := strings.Split(u.Scheme, "+")[0]
 	switch protocol {
 	case "file":
-		realPath := u.Host + "/" + u.Path
+		realPath := path.Join(u.Host, u.Path)
 		return NewFileReadWriter(strings.TrimRight(realPath, "/"))
 	case "udp":
 		return NewUDPReadWriter(u)
@@ -50,9 +51,18 @@ func NewReadWriter(u *url.URL) (io.ReadWriteCloser, error) {
 
 func NewFileReadWriter(path string) (io.ReadWriteCloser, error) {
 	fmt.Println(path)
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0777)
-	if err != nil {
-		return nil, err
+	var file io.ReadWriteCloser
+	var err error
+	switch path {
+	case "/dev/stdout":
+		file = os.Stdout
+	case "/dev/stderr":
+		file = os.Stderr
+	default:
+		file, err = os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0777)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &rwStruct{EmptyReader, file, file}, nil
 }
